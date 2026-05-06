@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Weather from './assets/components/Weather.jsx'
 
 const App = () => {
@@ -6,10 +6,13 @@ const App = () => {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center transition-all duration-500"
+      className="relative min-h-screen overflow-hidden bg-cover bg-center transition-all duration-500"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <Weather setBgImage={setBgImage} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,8,30,0.10),rgba(7,10,25,0.52))] pointer-events-none"></div>
+      <div className="relative z-10">
+        <Weather setBgImage={setBgImage} />
+      </div>
     </div>
   )
 }

@@ -6,3 +6,6 @@ A dynamic weather application built with React and Vite.
 - Real-time weather updates
 - Dynamic background GIFs based on weather conditions
 - Responsive design
+
+### Used "openweathermap" for the API
+- https://openweathermap.org/api
