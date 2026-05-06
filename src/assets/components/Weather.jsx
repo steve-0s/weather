@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { RefreshCw, Search } from 'react-feather'
+import { Search } from 'react-feather'
 
 const clear_d_icon = "/images/clear-d.png"
 const clear_n_icon = "/images/clear-n.png"
@@ -21,7 +21,6 @@ const Weather = ({ setBgImage }) => {
   const [city, setCity] = useState("");
   const [activeCity, setActiveCity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
   const hasLoadedSavedCity = useRef(false);
 
@@ -141,14 +140,10 @@ const Weather = ({ setBgImage }) => {
     return directions[index];
   };
 
-  const search = async (cityName, { silent = false } = {}) => {
+  const search = async (cityName) => {
     if (!cityName.trim()) return;
 
-    if (silent) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
+    setIsLoading(true);
     setError("");
     try {
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${import.meta.env.VITE_API_KEY}`;
@@ -194,7 +189,6 @@ const Weather = ({ setBgImage }) => {
       setError("We couldn't find that city. Try checking the spelling.");
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   }
 
@@ -243,32 +237,26 @@ const Weather = ({ setBgImage }) => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 mb-4">
-                <input
-                  type="text"
-                  placeholder="Search for City"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 h-12 border border-white/10 rounded-full outline-none text-base px-6 bg-white/85 text-slate-900 placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-fuchsia-300 transition-all duration-200 shadow-[0_10px_30px_rgba(15,23,42,0.16)]"
-                />
-                <button
-                  onClick={handleSearch}
-                  className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-cyan-400 flex-shrink-0 cursor-pointer transition-all duration-200 shadow-[0_10px_25px_rgba(236,72,153,0.35)] hover:shadow-[0_0_28px_rgba(34,211,238,0.4)] hover:scale-105 active:scale-95"
-                  aria-label="Search city"
-                >
-                  <Search size={18} strokeWidth={2.5} className="text-white" aria-hidden="true" />
-                </button>
-                <button
-                  onClick={() => search(activeCity || defaultCity, { silent: true })}
-                  disabled={!weatherData || isLoading || isRefreshing}
-                  className="h-12 px-4 flex items-center gap-2 rounded-full border border-white/15 bg-white/8 text-white/90 transition-all duration-200 hover:bg-white/14 hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label="Refresh weather"
-                  title="Refresh weather"
-                >
-                  <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} aria-hidden="true" />
-                  <span className="hidden sm:inline text-sm">Refresh</span>
-                </button>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+                <div className="flex h-14 flex-1 items-center rounded-full border border-white/12 bg-white/10 px-2 shadow-[0_10px_30px_rgba(15,23,42,0.16)] backdrop-blur-md transition-colors duration-200 focus-within:border-cyan-300/30 focus-within:bg-white/14">
+                  <Search size={18} strokeWidth={2.2} className="ml-3 shrink-0 text-white/55" aria-hidden="true" />
+                  <input
+                    type="text"
+                    placeholder="Search for city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="h-full flex-1 bg-transparent px-3 text-base text-white outline-none placeholder:text-white/45"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className="ml-2 inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-medium text-white/85 transition-all duration-200 hover:border-white/18 hover:bg-white/16 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-300/30 active:scale-[0.98]"
+                    aria-label="Search city"
+                  >
+                    <Search size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span className="hidden sm:inline">Search</span>
+                  </button>
+                </div>
               </div>
               <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-white/60">
                 {activeCity ? (
