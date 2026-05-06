@@ -15,7 +15,6 @@ const snow_icon = "/images/snow.png"
 const storm_icon = "/images/storm.png"
 const wind_icon = "/images/wind.png"
 const defaultCity = "Manila"
-const refreshIntervalMs = 10 * 60 * 1000
 
 const Weather = ({ setBgImage }) => {
   const [weatherData, setWeatherData] = useState(null);
@@ -217,29 +216,6 @@ const Weather = ({ setBgImage }) => {
     search(savedCity || defaultCity);
   }, []);
 
-  useEffect(() => {
-    if (!activeCity) return;
-
-    const refreshWeather = () => {
-      search(activeCity, { silent: true });
-    };
-
-    const intervalId = window.setInterval(refreshWeather, refreshIntervalMs);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        refreshWeather();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [activeCity]);
-
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-8 rounded-xl">
       <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] border border-white/10 bg-slate-950/5 shadow-[0_24px_70px_rgba(2,6,23,0.22)] backdrop-blur-md">
@@ -295,9 +271,6 @@ const Weather = ({ setBgImage }) => {
                 </button>
               </div>
               <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-white/60">
-                <span>
-                  Auto refreshes every 10 minutes while the page is open.
-                </span>
                 {activeCity ? (
                   <span>
                     Showing {activeCity}
