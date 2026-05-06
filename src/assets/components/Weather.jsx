@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Search } from 'react-feather'
+import { useEffect, useRef, useState } from 'react'
+import { RefreshCw, Search } from 'react-feather'
 
 const clear_d_icon = "/images/clear-d.png"
 const clear_n_icon = "/images/clear-n.png"
@@ -15,12 +15,16 @@ const snow_icon = "/images/snow.png"
 const storm_icon = "/images/storm.png"
 const wind_icon = "/images/wind.png"
 const defaultCity = "Manila"
+const refreshIntervalMs = 10 * 60 * 1000
 
 const Weather = ({ setBgImage }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [city, setCity] = useState("");
+  const [activeCity, setActiveCity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const hasLoadedSavedCity = useRef(false);
 
   const allIcons = {
     "01d": clear_d_icon,
@@ -138,10 +142,14 @@ const Weather = ({ setBgImage }) => {
     return directions[index];
   };
 
-  const search = async (cityName) => {
+  const search = async (cityName, { silent = false } = {}) => {
     if (!cityName.trim()) return;
 
-    setIsLoading(true);
+    if (silent) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     setError("");
     try {
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${import.meta.env.VITE_API_KEY}`;
@@ -155,6 +163,9 @@ const Weather = ({ setBgImage }) => {
       const bgImage = allBackgrounds[iconCode] || "/gifs/clear-d.gif";
 
       setBgImage(bgImage);
+      setCity(data.name);
+      setActiveCity(data.name);
+      localStorage.setItem("weather:lastCity", data.name);
       setWeatherData({
         condition: capitalize(data.weather?.[0]?.description || ""),
         humidity: data.main.humidity,
@@ -184,6 +195,7 @@ const Weather = ({ setBgImage }) => {
       setError("We couldn't find that city. Try checking the spelling.");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   }
 
@@ -198,8 +210,35 @@ const Weather = ({ setBgImage }) => {
   }
 
   useEffect(() => {
-    search(defaultCity);
+    if (hasLoadedSavedCity.current) return;
+    hasLoadedSavedCity.current = true;
+
+    const savedCity = localStorage.getItem("weather:lastCity");
+    search(savedCity || defaultCity);
   }, []);
+
+  useEffect(() => {
+    if (!activeCity) return;
+
+    const refreshWeather = () => {
+      search(activeCity, { silent: true });
+    };
+
+    const intervalId = window.setInterval(refreshWeather, refreshIntervalMs);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshWeather();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [activeCity]);
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-8 rounded-xl">
@@ -240,9 +279,30 @@ const Weather = ({ setBgImage }) => {
                 <button
                   onClick={handleSearch}
                   className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-cyan-400 flex-shrink-0 cursor-pointer transition-all duration-200 shadow-[0_10px_25px_rgba(236,72,153,0.35)] hover:shadow-[0_0_28px_rgba(34,211,238,0.4)] hover:scale-105 active:scale-95"
+                  aria-label="Search city"
                 >
                   <Search size={18} strokeWidth={2.5} className="text-white" aria-hidden="true" />
                 </button>
+                <button
+                  onClick={() => search(activeCity || defaultCity, { silent: true })}
+                  disabled={!weatherData || isLoading || isRefreshing}
+                  className="h-12 px-4 flex items-center gap-2 rounded-full border border-white/15 bg-white/8 text-white/90 transition-all duration-200 hover:bg-white/14 hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Refresh weather"
+                  title="Refresh weather"
+                >
+                  <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} aria-hidden="true" />
+                  <span className="hidden sm:inline text-sm">Refresh</span>
+                </button>
+              </div>
+              <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-white/60">
+                <span>
+                  Auto refreshes every 10 minutes while the page is open.
+                </span>
+                {activeCity ? (
+                  <span>
+                    Showing {activeCity}
+                  </span>
+                ) : null}
               </div>
               {error ? (
                 <p className="mb-5 text-sm text-rose-100 bg-rose-500/15 border border-rose-300/20 rounded-2xl px-4 py-3 backdrop-blur-sm">
